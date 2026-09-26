@@ -1,0 +1,9 @@
+node_modules/
+npm-debug.log*
+.env
+.env.*
+!.env.example
+
+application/juice-shop/node_modules/
+application/juice-shop/dist/
+application/juice-shop/.angular/
