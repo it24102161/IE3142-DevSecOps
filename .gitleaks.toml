@@ -1,0 +1,10 @@
+title = "IE3142 DevSecOps Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "OWASP Juice Shop test fixtures contain intentional JWT-like test values"
+paths = [
+    '''application/juice-shop/test/'''
+]
