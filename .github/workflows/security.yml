@@ -41,15 +41,22 @@ jobs:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
 
-      # 2. Gate 2 - Dependency Scan
-- name: Gate 2 - Run Dependency Scan (npm audit)
-  working-directory: application/juice-shop
-  run: |
-    echo "Installing dependencies..."
-    npm install --ignore-scripts
+      # ============================================================
+      # 3. GATE 2 - DEPENDENCY SCAN
+      # Node.js dependency security scanning using npm audit
+      # ============================================================
+      - name: Gate 2 - Run Dependency Scan (npm audit)
+        working-directory: application/juice-shop
+        run: |
+          echo "Installing dependencies..."
 
-    echo "Running npm audit..."
-    npm audit --audit-level=high || true
+          npm install --ignore-scripts
+
+          echo "Running npm audit..."
+
+          npm audit --audit-level=high || true
+
+          echo "Dependency scan completed."
 
 
       # ============================================================
@@ -96,12 +103,9 @@ jobs:
       # 7. GATE 4 - CONTAINER VULNERABILITY SCAN
       # Trivy
       #
-      # IMPORTANT:
       # scanners: vuln
-      #
-      # This prevents Trivy secret scanning from failing the
-      # container vulnerability gate because Juice Shop contains
-      # intentional test/development private keys.
+      # Only vulnerability scanning is performed.
+      # Secret scanning is handled separately by Gitleaks.
       # ============================================================
       - name: Gate 4 - Run Container Scan (Trivy)
         uses: aquasecurity/trivy-action@master
@@ -123,10 +127,10 @@ jobs:
           echo "=========================================="
           echo " DevSecOps Security Pipeline Completed"
           echo "=========================================="
-          echo "SAST:               PASSED"
-          echo "Dependency Scan:    PASSED"
-          echo "Secret Scan:        PASSED"
-          echo "Docker Build:       PASSED"
-          echo "Docker Verification:PASSED"
-          echo "Trivy Scan:         PASSED"
+          echo "SAST:                 PASSED"
+          echo "Dependency Scan:      PASSED"
+          echo "Secret Scan:          PASSED"
+          echo "Docker Build:         PASSED"
+          echo "Docker Verification:  PASSED"
+          echo "Trivy Scan:           PASSED"
           echo "=========================================="
