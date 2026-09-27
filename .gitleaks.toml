@@ -1,0 +1,22 @@
+title = "IE3142 DevSecOps Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Allow intentionally embedded OWASP Juice Shop test and demonstration values"
+
+paths = [
+  '''application/juice-shop/test/.*''',
+  '''application/juice-shop/data/static/users\.yml''',
+  '''application/juice-shop/lib/insecurity\.ts''',
+  '''application/juice-shop/routes/login\.ts''',
+  '''application/juice-shop/terraform/networking\.tf''',
+  '''application/juice-shop/infrastructure/terraform/networking\.tf''',
+
+  # Intentional Juice Shop frontend test/demo values
+  '''application/juice-shop/frontend/src/app/app\.guard\.spec\.ts''',
+  '''application/juice-shop/frontend/src/app/faucet/faucet\.component\.ts''',
+  '''application/juice-shop/frontend/src/app/last-login-ip/last-login-ip\.component\.spec\.ts''',
+  '''application/juice-shop/frontend/src/app/oauth/oauth\.component\.spec\.ts'''
+]
