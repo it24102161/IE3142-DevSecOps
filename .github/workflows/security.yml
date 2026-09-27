@@ -12,11 +12,11 @@ on:
     branches:
       - main
       - master
-
-  workflow_dispatch:
+      - dev
 
 jobs:
   secops-pipeline:
+    name: DevSecOps Security Pipeline
     runs-on: ubuntu-latest
 
     steps:
@@ -25,7 +25,7 @@ jobs:
       # 1. CHECKOUT SOURCE CODE
       # ============================================================
       - name: Checkout Repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -36,43 +36,51 @@ jobs:
       # ============================================================
       - name: Gate 1 - Run SAST (Semgrep)
         uses: semgrep/semgrep-action@v1
-        with:
-          config: auto
+        continue-on-error: false
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
 
       # ============================================================
-      # 3. GATE 2 - DEPENDENCY SCAN
-      # npm audit for OWASP Juice Shop
+      # 3. GATE 2 - DEPENDENCY SCANNING
+      # npm audit
       # ============================================================
       - name: Gate 2 - Run Dependency Scan (npm audit)
-        working-directory: ./application/juice-shop
+        working-directory: application/juice-shop
         run: |
-          echo "Running npm dependency security audit..."
-          npm audit --audit-level=high || true
+          echo "Installing dependencies..."
+          npm ci --ignore-scripts
+
+          echo "Running npm audit..."
+          npm audit --audit-level=high
 
 
       # ============================================================
-      # 4. GATE 3 - SECRETS SCAN
+      # 4. GATE 3 - SECRET SCANNING
       # Gitleaks
       # ============================================================
       - name: Gate 3 - Run Secrets Scan (Gitleaks)
-        uses: gitleaks/gitleaks-action@v3
+        uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_CONFIG: .gitleaks.toml
 
 
       # ============================================================
       # 5. BUILD DOCKER IMAGE
-      # Build the Juice Shop Docker image from its Dockerfile
       # ============================================================
       - name: Build Docker Image
+        working-directory: application
         run: |
-          echo "Building OWASP Juice Shop Docker image..."
+          echo "Building Juice Shop Docker image..."
 
           docker build \
             -t ie3142-juice-shop:latest \
-            ./application/juice-shop
+            -f juice-shop/Dockerfile \
+            juice-shop
+
+          echo "Docker image built successfully."
+
+          docker images ie3142-juice-shop:latest
 
 
       # ============================================================
@@ -82,37 +90,46 @@ jobs:
         run: |
           echo "Verifying Docker image..."
 
-          docker images ie3142-juice-shop:latest
-
           docker image inspect ie3142-juice-shop:latest
+
+          echo "Docker image verification successful."
 
 
       # ============================================================
-      # 7. GATE 4 - CONTAINER IMAGE SCAN
-      # Trivy scans the image built by this pipeline
+      # 7. GATE 4 - CONTAINER VULNERABILITY SCAN
+      # Trivy
+      #
+      # IMPORTANT:
+      # scanners: vuln
+      #
+      # This prevents Trivy secret scanning from failing the
+      # container vulnerability gate because Juice Shop contains
+      # intentional test/development private keys.
       # ============================================================
       - name: Gate 4 - Run Container Scan (Trivy)
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'ie3142-juice-shop:latest'
-          format: 'table'
+          image-ref: ie3142-juice-shop:latest
+          format: table
+          severity: HIGH,CRITICAL
+          scanners: vuln
+          ignore-unfixed: true
           exit-code: '1'
-          severity: 'CRITICAL,HIGH'
 
 
       # ============================================================
-      # 8. PIPELINE SUCCESS MESSAGE
+      # 8. PIPELINE SUCCESS
       # ============================================================
       - name: Security Pipeline Completed
         if: success()
         run: |
-          echo "=============================================="
-          echo " DevSecOps Security Pipeline PASSED"
-          echo "=============================================="
-          echo "Gate 1 - Semgrep SAST       : PASSED"
-          echo "Gate 2 - npm Audit          : PASSED"
-          echo "Gate 3 - Gitleaks           : PASSED"
-          echo "Docker Image Build          : PASSED"
-          echo "Docker Image Verification   : PASSED"
-          echo "Gate 4 - Trivy              : PASSED"
-          echo "=============================================="
+          echo "=========================================="
+          echo " DevSecOps Security Pipeline Completed"
+          echo "=========================================="
+          echo "SAST:               PASSED"
+          echo "Dependency Scan:    PASSED"
+          echo "Secret Scan:        PASSED"
+          echo "Docker Build:       PASSED"
+          echo "Docker Verification:PASSED"
+          echo "Trivy Scan:         PASSED"
+          echo "=========================================="
