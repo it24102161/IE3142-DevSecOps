@@ -7,6 +7,8 @@ on:
       - master
       - dev
       - member1-kadiman
+      - member3-Amasha
+      - member4-Dewminie
 
   pull_request:
     branches:
