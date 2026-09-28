@@ -84,10 +84,10 @@ jobs:
       #
       # Juice Shop contains intentional training/test credentials
       # and security challenge fixtures.
-      #
-      # The scan is still executed and findings are reported.
-      # The pipeline is not blocked by intentional Juice Shop
-      # test fixtures.
+      # This is the BLOCKING gate. continue-on-error is not set, so any
+      # secret not allowlisted in .gitleaks.toml fails the pipeline.
+      # 
+      # Intentional Juice Shop training fixtures are allowlisted by path.
       # ============================================================
 
       - name: Gate 3 - Run Secrets Scan (Gitleaks)
